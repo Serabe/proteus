@@ -115,29 +115,37 @@ func buildPackage(ctx *context, gopkg *types.Package) (*Package, error) {
 }
 
 func (p *Package) scanObject(ctx *context, o types.Object) {
-	n, ok := o.Type().(*types.Named)
-	if !ok || !o.Exported() {
+	if !o.Exported() {
 		return
 	}
 
-	switch o.(type) {
-	case *types.Var, *types.Const:
-		if _, ok := n.Underlying().(*types.Basic); ok {
-			scanEnumValue(ctx, o.Name(), n)
+	switch t := o.Type().(type) {
+	case *types.Named:
+		switch o.(type) {
+		case *types.Const:
+			if _, ok := t.Underlying().(*types.Basic); ok {
+				scanEnumValue(ctx, o.Name(), t)
+			}
+		case *types.TypeName:
+			if s, ok := t.Underlying().(*types.Struct); ok {
+				st := scanStruct(&Struct{
+					Name:     o.Name(),
+					Generate: ctx.shouldGenerateType(o.Name()),
+				}, s)
+				p.Structs = append(p.Structs, st)
+				return
+			}
+
+			p.Aliases[objName(t.Obj())] = scanType(t.Underlying())
 		}
-		return
+	case *types.Signature:
+		// TODO: find by qualified name
+		t.Recv().Type().Underlying().(*types.Named).Obj().Name()
+		if ctx.shouldGenerateFunc(o.Name()) {
+			fn := scanFunc(&Func{Name: o.Name()}, t)
+			p.Funcs = append(p.Funcs, fn)
+		}
 	}
-
-	if s, ok := n.Underlying().(*types.Struct); ok {
-		st := scanStruct(&Struct{
-			Name:     o.Name(),
-			Generate: ctx.shouldGenerateType(o.Name()),
-		}, s)
-		p.Structs = append(p.Structs, st)
-		return
-	}
-
-	p.Aliases[objName(n.Obj())] = scanType(n.Underlying())
 }
 
 func scanType(typ types.Type) (t Type) {
@@ -215,6 +223,11 @@ func scanStruct(s *Struct, elem *types.Struct) *Struct {
 	}
 
 	return s
+}
+
+func scanFunc(fn *Func, signature *types.Signature) *Func {
+	// TODO: impl
+	return fn
 }
 
 func findStruct(t types.Type) *types.Struct {
