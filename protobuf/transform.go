@@ -191,9 +191,7 @@ func toUpperSnakeCase(s string) string {
 	return strings.ToUpper(toLowerSnakeCase(s))
 }
 func defaultOptionsForPackage(p *scanner.Package) Options {
-	options := make(Options)
-
-	options["go_package"] = NewStringValue(p.Name)
-
-	return options
+	return Options{
+		"go_package": NewStringValue(p.Name),
+	}
 }
