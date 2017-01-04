@@ -220,6 +220,200 @@ func (s *TransformerSuite) TestTransformStruct() {
 	s.Equal(uint(1), msg.Reserved[0])
 }
 
+func (s *TransformerSuite) TestTransformFuncMultiple() {
+	fn := &scanner.Func{
+		Name: "DoFoo",
+		Input: []scanner.Type{
+			scanner.NewNamed("foo", "Bar"),
+			scanner.NewBasic("int"),
+		},
+		Output: []scanner.Type{
+			scanner.NewNamed("foo", "Foo"),
+			scanner.NewBasic("bool"),
+			scanner.NewBasic("error"),
+		},
+	}
+	pkg := &Package{Path: "baz"}
+	rpc := s.t.transformFunc(pkg, fn, nameSet{})
+
+	s.NotNil(rpc)
+	s.Equal(fn.Name, rpc.Name)
+	s.Equal(NewNamed("baz", "DoFooRequest"), rpc.Input)
+	s.Equal(NewNamed("baz", "DoFooResponse"), rpc.Output)
+
+	s.Equal(2, len(pkg.Messages), "two messages should have been created")
+	msg := pkg.Messages[0]
+	s.Equal("DoFooRequest", msg.Name)
+	s.Equal(2, len(msg.Fields), "DoFooRequest should have same fields as args")
+	s.assertField(msg.Fields[0], "arg1", NewNamed("foo", "Bar"))
+	s.assertField(msg.Fields[1], "arg2", NewBasic("int32"))
+
+	msg = pkg.Messages[1]
+	s.Equal("DoFooResponse", msg.Name)
+	s.Equal(2, len(msg.Fields), "DoFooResponse should have same results as return args")
+	s.assertField(msg.Fields[0], "result1", NewNamed("foo", "Foo"))
+	s.assertField(msg.Fields[1], "result2", NewBasic("bool"))
+}
+
+func (s *TransformerSuite) TestTransformFuncInputRegistered() {
+	fn := &scanner.Func{
+		Name: "DoFoo",
+		Input: []scanner.Type{
+			scanner.NewNamed("foo", "Bar"),
+			scanner.NewBasic("int"),
+		},
+		Output: []scanner.Type{
+			scanner.NewNamed("foo", "Foo"),
+			scanner.NewBasic("bool"),
+			scanner.NewBasic("error"),
+		},
+	}
+	rpc := s.t.transformFunc(&Package{}, fn, nameSet{"DoFooRequest": struct{}{}})
+
+	s.Nil(rpc)
+}
+
+func (s *TransformerSuite) TestTransformFuncOutputRegistered() {
+	fn := &scanner.Func{
+		Name: "DoFoo",
+		Input: []scanner.Type{
+			scanner.NewNamed("foo", "Bar"),
+			scanner.NewBasic("int"),
+		},
+		Output: []scanner.Type{
+			scanner.NewNamed("foo", "Foo"),
+			scanner.NewBasic("bool"),
+			scanner.NewBasic("error"),
+		},
+	}
+	rpc := s.t.transformFunc(&Package{}, fn, nameSet{"DoFooResponse": struct{}{}})
+
+	s.Nil(rpc)
+}
+
+func (s *TransformerSuite) TestTransformFuncEmpty() {
+	fn := &scanner.Func{Name: "DoFoo"}
+	pkg := &Package{Path: "baz"}
+	rpc := s.t.transformFunc(pkg, fn, nameSet{})
+
+	s.NotNil(rpc)
+	s.Equal(fn.Name, rpc.Name)
+	s.Equal(NewNamed("baz", "DoFooRequest"), rpc.Input)
+	s.Equal(NewNamed("baz", "DoFooResponse"), rpc.Output)
+
+	s.Equal(2, len(pkg.Messages), "two messages should have been created")
+	msg := pkg.Messages[0]
+	s.Equal("DoFooRequest", msg.Name)
+	s.Equal(0, len(msg.Fields), "DoFooRequest should have no args")
+
+	msg = pkg.Messages[1]
+	s.Equal("DoFooResponse", msg.Name)
+	s.Equal(0, len(msg.Fields), "DoFooResponse should have no results")
+}
+
+func (s *TransformerSuite) TestTransformFunc1BasicArg() {
+	fn := &scanner.Func{
+		Name: "DoFoo",
+		Input: []scanner.Type{
+			scanner.NewBasic("int"),
+		},
+		Output: []scanner.Type{
+			scanner.NewBasic("bool"),
+			scanner.NewBasic("error"),
+		},
+	}
+	pkg := new(Package)
+	rpc := s.t.transformFunc(pkg, fn, nameSet{})
+
+	s.NotNil(rpc)
+	s.Equal(fn.Name, rpc.Name)
+	s.Equal(NewNamed("", "DoFooRequest"), rpc.Input)
+	s.Equal(NewNamed("", "DoFooResponse"), rpc.Output)
+
+	s.Equal(2, len(pkg.Messages), "two messages should have been created")
+	msg := pkg.Messages[0]
+	s.Equal("DoFooRequest", msg.Name)
+	s.Equal(1, len(msg.Fields), "DoFooRequest should have same fields as args")
+	s.assertField(msg.Fields[0], "arg1", NewBasic("int32"))
+
+	msg = pkg.Messages[1]
+	s.Equal("DoFooResponse", msg.Name)
+	s.Equal(1, len(msg.Fields), "DoFooResponse should have same results as return args")
+	s.assertField(msg.Fields[0], "result1", NewBasic("bool"))
+}
+
+func (s *TransformerSuite) TestTransformFunc1NamedArg() {
+	fn := &scanner.Func{
+		Name: "DoFoo",
+		Input: []scanner.Type{
+			scanner.NewNamed("foo", "Foo"),
+		},
+		Output: []scanner.Type{
+			scanner.NewNamed("foo", "Bar"),
+			scanner.NewBasic("error"),
+		},
+	}
+	rpc := s.t.transformFunc(new(Package), fn, nameSet{})
+
+	s.NotNil(rpc)
+	s.Equal(fn.Name, rpc.Name)
+	s.Equal(NewNamed("foo", "Foo"), rpc.Input)
+	s.Equal(NewNamed("foo", "Bar"), rpc.Output)
+}
+
+func (s *TransformerSuite) TestTransformFuncReceiver() {
+	fn := &scanner.Func{
+		Name:     "DoFoo",
+		Receiver: scanner.NewNamed("foo", "Fooer"),
+	}
+	rpc := s.t.transformFunc(new(Package), fn, nameSet{})
+	s.NotNil(rpc)
+	s.Equal("Fooer_DoFoo", rpc.Name)
+}
+
+func (s *TransformerSuite) TestTransformFuncReceiverInvalid() {
+	fn := &scanner.Func{
+		Name:     "DoFoo",
+		Receiver: scanner.NewBasic("int"),
+	}
+	rpc := s.t.transformFunc(new(Package), fn, nameSet{})
+	s.Nil(rpc)
+}
+
+func (s *TransformerSuite) TestTransformFuncRepeatedSingle() {
+	fn := &scanner.Func{
+		Name:       "DoFoo",
+		IsVariadic: true,
+		Input: []scanner.Type{
+			repeated(scanner.NewBasic("int")),
+		},
+		Output: []scanner.Type{
+			repeated(scanner.NewBasic("bool")),
+			scanner.NewBasic("error"),
+		},
+	}
+	pkg := new(Package)
+	rpc := s.t.transformFunc(pkg, fn, nameSet{})
+
+	s.NotNil(rpc)
+	s.Equal(fn.Name, rpc.Name)
+	s.Equal(rpc.Input, NewNamed("", "DoFooRequest"))
+	s.Equal(rpc.Output, NewNamed("", "DoFooResponse"))
+
+	s.Equal(2, len(pkg.Messages), "two messages should have been created")
+	msg := pkg.Messages[0]
+	s.Equal("DoFooRequest", msg.Name)
+	s.Equal(1, len(msg.Fields), "DoFooRequest should have same fields as args")
+	s.assertField(msg.Fields[0], "arg1", NewBasic("int32"))
+	s.True(msg.Fields[0].Repeated, "field should be repeated")
+
+	msg = pkg.Messages[1]
+	s.Equal("DoFooResponse", msg.Name)
+	s.Equal(1, len(msg.Fields), "DoFooResponse should have same results as return args")
+	s.assertField(msg.Fields[0], "result1", NewBasic("bool"))
+	s.True(msg.Fields[0].Repeated, "field should be repeated")
+}
+
 func (s *TransformerSuite) TestTransformEnum() {
 	enum := s.t.transformEnum(&scanner.Enum{
 		Name:   "Foo",
@@ -263,6 +457,11 @@ func (s *TransformerSuite) fixtures() []*scanner.Package {
 	s.Nil(err)
 	resolver.New().Resolve(pkgs)
 	return pkgs
+}
+
+func (s *TransformerSuite) assertField(f *Field, name string, typ Type) {
+	s.Equal(f.Name, name)
+	s.Equal(f.Type, typ)
 }
 
 func (s *TransformerSuite) assertEnumVal(v *EnumValue, name string, val uint) {

@@ -2,6 +2,7 @@ package protobuf
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 	"unicode"
 
@@ -56,16 +57,86 @@ func (t *Transformer) Transform(p *scanner.Package) *Package {
 		pkg.Enums = append(pkg.Enums, enum)
 	}
 
+	names := buildNameSet(p)
+	for _, f := range p.Funcs {
+		rpc := t.transformFunc(pkg, f, names)
+		if rpc != nil {
+			pkg.RPCs = append(pkg.RPCs, rpc)
+		}
+	}
+
 	return pkg
+}
+
+func (t *Transformer) transformFunc(pkg *Package, f *scanner.Func, names nameSet) *RPC {
+	name := f.Name
+	if f.Receiver != nil {
+		n, ok := f.Receiver.(*scanner.Named)
+		if !ok {
+			report.Warn("invalid receiver type for func %s", f.Name)
+			return nil
+		}
+
+		name = fmt.Sprintf("%s_%s", n.Name, name)
+	}
+
+	rpc := &RPC{
+		Name:   name,
+		Input:  t.transformInputTypes(pkg, f.Input, names, name),
+		Output: t.transformOutputTypes(pkg, f.Output, names, name),
+	}
+	if rpc.Input == nil || rpc.Output == nil {
+		return nil
+	}
+
+	return rpc
+}
+
+func (t *Transformer) transformInputTypes(pkg *Package, types []scanner.Type, names nameSet, name string) Type {
+	return t.transformTypeList(pkg, types, names, name, "Request", "arg")
+}
+
+func (t *Transformer) transformOutputTypes(pkg *Package, types []scanner.Type, names nameSet, name string) Type {
+	return t.transformTypeList(pkg, removeLastError(types), names, name, "Response", "result")
+}
+
+func (t *Transformer) transformTypeList(pkg *Package, types []scanner.Type, names nameSet, name, msgNameSuffix, msgFieldPrefix string) Type {
+	// the type list should be wrapped in a separate message if:
+	// - there is more than one element
+	// - there is one element and it is repeated, as this is not supported in protobuf
+	// - there is one element and it is not a message, as protobuf expects messages as input/output
+	if len(types) != 1 || types[0].IsRepeated() || !isNamed(types[0]) {
+		msgName := name + msgNameSuffix
+		if _, ok := names[msgName]; ok {
+			report.Warn("tried to register message %s, but there is already a message with that name. RPC %s will not be generated", msgName, name)
+			return nil
+		}
+
+		msg := t.createMessageFromTypes(pkg, msgName, types, msgFieldPrefix)
+		pkg.Messages = append(pkg.Messages, msg)
+		return NewNamed(toProtobufPkg(pkg.Path), msgName)
+	}
+
+	return t.transformType(pkg, types[0])
+}
+
+func (t *Transformer) createMessageFromTypes(pkg *Package, name string, types []scanner.Type, fieldPrefix string) *Message {
+	msg := &Message{Name: name}
+	for i, typ := range types {
+		f := t.transformField(pkg, &scanner.Field{
+			Name: fmt.Sprintf("%s%d", fieldPrefix, i+1),
+			Type: typ,
+		}, i+1)
+		msg.Fields = append(msg.Fields, f)
+	}
+	return msg
 }
 
 func (t *Transformer) transformEnum(e *scanner.Enum) *Enum {
 	enum := &Enum{Name: e.Name}
-
 	for i, v := range e.Values {
 		enum.Values.Add(toUpperSnakeCase(v), uint(i), nil)
 	}
-
 	return enum
 }
 
@@ -87,8 +158,10 @@ func (t *Transformer) transformStruct(pkg *Package, s *scanner.Struct) *Message 
 }
 
 func (t *Transformer) transformField(pkg *Package, field *scanner.Field, pos int) *Field {
-	var typ Type
-	var repeated = field.Type.IsRepeated()
+	var (
+		typ      Type
+		repeated = field.Type.IsRepeated()
+	)
 
 	// []byte is the only repeated type that maps to
 	// a non-repeated type in protobuf, so we handle
@@ -149,6 +222,22 @@ func (t *Transformer) findMapping(name string) *ProtoType {
 	return typ
 }
 
+func removeLastError(types []scanner.Type) []scanner.Type {
+	if len(types) > 0 {
+		last := types[len(types)-1]
+		if b, ok := last.(*scanner.Basic); ok && b.Name == "error" {
+			return types[:len(types)-1]
+		}
+	}
+
+	return types
+}
+
+func isNamed(typ scanner.Type) bool {
+	_, ok := typ.(*scanner.Named)
+	return ok
+}
+
 func isByteSlice(typ scanner.Type) bool {
 	if t, ok := typ.(*scanner.Basic); ok && typ.IsRepeated() {
 		return t.Name == "byte"
@@ -190,8 +279,25 @@ func toLowerSnakeCase(s string) string {
 func toUpperSnakeCase(s string) string {
 	return strings.ToUpper(toLowerSnakeCase(s))
 }
+
 func defaultOptionsForPackage(p *scanner.Package) Options {
 	return Options{
 		"go_package": NewStringValue(p.Name),
 	}
+}
+
+type nameSet map[string]struct{}
+
+func buildNameSet(pkg *scanner.Package) nameSet {
+	l := make(nameSet)
+
+	for _, e := range pkg.Enums {
+		l[e.Name] = struct{}{}
+	}
+
+	for _, s := range pkg.Structs {
+		l[s.Name] = struct{}{}
+	}
+
+	return l
 }
