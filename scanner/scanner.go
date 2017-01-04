@@ -140,7 +140,7 @@ func (p *Package) scanObject(ctx *context, o types.Object) {
 		}
 	case *types.Signature:
 		// TODO: find by qualified name
-		t.Recv().Type().Underlying().(*types.Named).Obj().Name()
+		//t.Recv().Type().Underlying().(*types.Named).Obj().Name()
 		if ctx.shouldGenerateFunc(o.Name()) {
 			fn := scanFunc(&Func{Name: o.Name()}, t)
 			p.Funcs = append(p.Funcs, fn)
@@ -226,8 +226,24 @@ func scanStruct(s *Struct, elem *types.Struct) *Struct {
 }
 
 func scanFunc(fn *Func, signature *types.Signature) *Func {
-	// TODO: impl
+	if signature.Recv() != nil {
+		fn.Receiver = scanType(signature.Recv().Type())
+	}
+	fn.Input = scanTuple(signature.Params())
+	fn.Output = scanTuple(signature.Results())
+	fn.IsVariadic = signature.Variadic()
+
 	return fn
+}
+
+func scanTuple(tuple *types.Tuple) []Type {
+	result := make([]Type, 0, tuple.Len())
+
+	for i := 0; i < tuple.Len(); i++ {
+		result = append(result, scanType(tuple.At(i).Type()))
+	}
+
+	return result
 }
 
 func findStruct(t types.Type) *types.Struct {
