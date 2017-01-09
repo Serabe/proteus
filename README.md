@@ -201,7 +201,7 @@ The last `error` type is ignored.
 
 ### Generate RPC server implementation
 
-`gogo/protobuf` generates the interface you need to implement based on yout `.proto` file. The problem with that is that you actually have to implement that and maintain it. Instead, you can just generate it automatically with proteus.
+`gogo/protobuf` generates the interface you need to implement based on your `.proto` file. The problem with that is that you actually have to implement that and maintain it. Instead, you can just generate it automatically with proteus.
 
 Consider the Go code of the previous section, we could generate the implementation of that service.
 
