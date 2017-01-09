@@ -223,6 +223,10 @@ func (s *RPCSuite) TestDeclMethod() {
 
 const expectedGeneratedFile = `package subpkg
 
+import (
+	"context"
+)
+
 type subpkgServiceServer struct {
 }
 

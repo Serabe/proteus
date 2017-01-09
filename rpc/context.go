@@ -69,6 +69,10 @@ func firstTypeName(tuple *types.Tuple) types.Object {
 }
 
 func (c *context) addImport(path string) {
+	if path == c.pkg.Path() {
+		return
+	}
+
 	for _, i := range c.imports {
 		if i == path {
 			return

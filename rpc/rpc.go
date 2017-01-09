@@ -7,6 +7,7 @@ import (
 	"go/token"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/src-d/proteus/protobuf"
 	"github.com/src-d/proteus/report"
@@ -248,16 +249,20 @@ func (g *Generator) declMethod(ctx *context, rpc *protobuf.RPC) ast.Decl {
 
 func (g *Generator) buildFile(ctx *context, decls []ast.Decl) *ast.File {
 	f := &ast.File{
-		Name:  ast.NewIdent(ctx.pkg.Name()),
-		Decls: decls,
-		Imports: []*ast.ImportSpec{
-			newImport("context"),
-		},
+		Name: ast.NewIdent(ctx.pkg.Name()),
 	}
 
+	var specs = []ast.Spec{newImport("context")}
 	for _, i := range ctx.imports {
-		f.Imports = append(f.Imports, newImport(i))
+		specs = append(specs, newImport(i))
 	}
+
+	f.Decls = append(f.Decls, &ast.GenDecl{
+		Tok:    token.IMPORT,
+		Lparen: token.Pos(1),
+		Specs:  specs,
+	})
+	f.Decls = append(f.Decls, decls...)
 
 	return f
 }
@@ -293,7 +298,7 @@ func newImport(path string) *ast.ImportSpec {
 	return &ast.ImportSpec{
 		Path: &ast.BasicLit{
 			Kind:  token.STRING,
-			Value: path,
+			Value: fmt.Sprintf(`"%s"`, removeGoPath(path)),
 		},
 	}
 }
@@ -311,4 +316,10 @@ func fields(fields ...*ast.Field) *ast.FieldList {
 
 func ptr(expr ast.Expr) ast.Expr {
 	return &ast.StarExpr{X: expr}
+}
+
+var goSrc = filepath.Join(os.Getenv("GOPATH"), "src") + "/"
+
+func removeGoPath(path string) string {
+	return strings.Replace(path, goSrc, "", -1)
 }
