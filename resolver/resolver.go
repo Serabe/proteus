@@ -26,6 +26,7 @@ func New() *Resolver {
 		customTypes: map[string]struct{}{
 			"time.Time":     {},
 			"time.Duration": {},
+			"error":         {},
 		},
 	}
 }
