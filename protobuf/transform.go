@@ -185,6 +185,11 @@ func (t *Transformer) transformField(pkg *Package, field *scanner.Field, pos int
 }
 
 func (t *Transformer) transformType(pkg *Package, typ scanner.Type) Type {
+	if isError(typ) {
+		report.Error("error type is not supported")
+		return nil
+	}
+
 	switch ty := typ.(type) {
 	case *scanner.Named:
 		protoType := t.findMapping(ty.String())
@@ -225,7 +230,7 @@ func (t *Transformer) findMapping(name string) *ProtoType {
 func removeLastError(types []scanner.Type) []scanner.Type {
 	if len(types) > 0 {
 		last := types[len(types)-1]
-		if b, ok := last.(*scanner.Basic); ok && b.Name == "error" {
+		if isError(last) {
 			return types[:len(types)-1]
 		}
 	}
@@ -236,6 +241,13 @@ func removeLastError(types []scanner.Type) []scanner.Type {
 func isNamed(typ scanner.Type) bool {
 	_, ok := typ.(*scanner.Named)
 	return ok
+}
+
+func isError(typ scanner.Type) bool {
+	if err, ok := typ.(*scanner.Named); ok {
+		return err.Path == "" && err.Name == "error"
+	}
+	return false
 }
 
 func isByteSlice(typ scanner.Type) bool {

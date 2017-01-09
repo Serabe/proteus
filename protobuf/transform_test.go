@@ -230,7 +230,7 @@ func (s *TransformerSuite) TestTransformFuncMultiple() {
 		Output: []scanner.Type{
 			scanner.NewNamed("foo", "Foo"),
 			scanner.NewBasic("bool"),
-			scanner.NewBasic("error"),
+			scanner.NewNamed("", "error"),
 		},
 	}
 	pkg := &Package{Path: "baz"}
@@ -265,7 +265,7 @@ func (s *TransformerSuite) TestTransformFuncInputRegistered() {
 		Output: []scanner.Type{
 			scanner.NewNamed("foo", "Foo"),
 			scanner.NewBasic("bool"),
-			scanner.NewBasic("error"),
+			scanner.NewNamed("", "error"),
 		},
 	}
 	rpc := s.t.transformFunc(&Package{}, fn, nameSet{"DoFooRequest": struct{}{}})
@@ -283,7 +283,7 @@ func (s *TransformerSuite) TestTransformFuncOutputRegistered() {
 		Output: []scanner.Type{
 			scanner.NewNamed("foo", "Foo"),
 			scanner.NewBasic("bool"),
-			scanner.NewBasic("error"),
+			scanner.NewNamed("", "error"),
 		},
 	}
 	rpc := s.t.transformFunc(&Package{}, fn, nameSet{"DoFooResponse": struct{}{}})
@@ -319,7 +319,7 @@ func (s *TransformerSuite) TestTransformFunc1BasicArg() {
 		},
 		Output: []scanner.Type{
 			scanner.NewBasic("bool"),
-			scanner.NewBasic("error"),
+			scanner.NewNamed("", "error"),
 		},
 	}
 	pkg := new(Package)
@@ -350,7 +350,7 @@ func (s *TransformerSuite) TestTransformFunc1NamedArg() {
 		},
 		Output: []scanner.Type{
 			scanner.NewNamed("foo", "Bar"),
-			scanner.NewBasic("error"),
+			scanner.NewNamed("", "error"),
 		},
 	}
 	rpc := s.t.transformFunc(new(Package), fn, nameSet{})
@@ -389,7 +389,7 @@ func (s *TransformerSuite) TestTransformFuncRepeatedSingle() {
 		},
 		Output: []scanner.Type{
 			repeated(scanner.NewBasic("bool")),
-			scanner.NewBasic("error"),
+			scanner.NewNamed("", "error"),
 		},
 	}
 	pkg := new(Package)
@@ -440,6 +440,7 @@ func (s *TransformerSuite) TestTransform() {
 	}, pkg.Imports)
 	s.Equal(1, len(pkg.Enums))
 	s.Equal(4, len(pkg.Messages))
+	s.Equal(0, len(pkg.RPCs))
 
 	pkg = s.t.Transform(pkgs[1])
 	s.Equal("github.com.srcd.proteus.fixtures.subpkg", pkg.Name)
@@ -447,7 +448,20 @@ func (s *TransformerSuite) TestTransform() {
 	s.Equal(NewStringValue("subpkg"), pkg.Options["go_package"])
 	s.Equal([]string(nil), pkg.Imports)
 	s.Equal(0, len(pkg.Enums))
-	s.Equal(1, len(pkg.Messages))
+	s.Equal(5, len(pkg.Messages))
+
+	var msgs = []string{
+		"Point",
+		"GeneratedRequest",
+		"GeneratedResponse",
+		"Point_GeneratedMethodRequest",
+		"Point_GeneratedMethodOnPointerRequest",
+	}
+	for i, m := range pkg.Messages {
+		s.Equal(msgs[i], m.Name)
+	}
+
+	s.Equal(3, len(pkg.RPCs))
 }
 
 func (s *TransformerSuite) fixtures() []*scanner.Package {
