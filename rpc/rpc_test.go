@@ -8,9 +8,14 @@ import (
 	"go/printer"
 	"go/token"
 	"go/types"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/src-d/proteus/protobuf"
+	"github.com/src-d/proteus/resolver"
+	"github.com/src-d/proteus/scanner"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -216,6 +221,52 @@ func (s *RPCSuite) TestDeclMethod() {
 	}
 }
 
+const expectedGeneratedFile = `package subpkg
+
+type subpkgServiceServer struct {
+}
+
+func NewSubpkgServiceServer() *subpkgServiceServer {
+	return &subpkgServiceServer{}
+}
+func (s *subpkgServiceServer) Generated(ctx context.Context, in *GeneratedRequest) (result *GeneratedResponse, err error) {
+	result = new(GeneratedResponse)
+	result.Result1, err = Generated(in.Arg1)
+	return
+}
+func (s *subpkgServiceServer) Point_GeneratedMethod(ctx context.Context, in *Point_GeneratedMethodRequest) (result *subpkg.Point, err error) {
+	result = new(subpkg.Point)
+	result = s.Point.GeneratedMethod(in.Arg1)
+	return
+}
+func (s *subpkgServiceServer) Point_GeneratedMethodOnPointer(ctx context.Context, in *Point_GeneratedMethodOnPointerRequest) (result *subpkg.Point, err error) {
+	result = new(subpkg.Point)
+	result = s.Point.GeneratedMethodOnPointer(in.Arg1)
+	return
+}
+`
+
+func (s *RPCSuite) TestGenerate() {
+	pkg := "github.com/src-d/proteus/fixtures/subpkg"
+	scanner, err := scanner.New(pkg)
+	s.Nil(err)
+
+	pkgs, err := scanner.Scan()
+	s.Nil(err)
+
+	r := resolver.New()
+	r.Resolve(pkgs)
+
+	t := protobuf.NewTransformer()
+	s.Nil(s.g.Generate(t.Transform(pkgs[0]), pkg))
+
+	data, err := ioutil.ReadFile(projectPath("fixtures/subpkg/server.proteus.go"))
+	s.Nil(err)
+	s.Equal(expectedGeneratedFile, string(data))
+
+	s.Nil(os.Remove(projectPath("fixtures/subpkg/server.proteus.go")))
+}
+
 func TestServiceImplName(t *testing.T) {
 	require.Equal(t, "fooServiceServer", serviceImplName(&protobuf.Package{
 		Name: "foo",
@@ -279,4 +330,8 @@ func render(decl ast.Decl) (string, error) {
 
 func TestRPCSuite(t *testing.T) {
 	suite.Run(t, new(RPCSuite))
+}
+
+func projectPath(path string) string {
+	return filepath.Join(os.Getenv("GOPATH"), "src", "github.com/src-d/proteus", path)
 }
