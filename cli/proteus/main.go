@@ -21,7 +21,7 @@ func main() {
 	app.Description = "Generate .proto files from your Go packages."
 	app.Version = "0.9.0"
 
-	app.Flags = []cli.Flag{
+	baseFlags := []cli.Flag{
 		cli.StringSliceFlag{
 			Name:  "pkg, p",
 			Usage: "Use `PACKAGE` as input for the generation. You can use this flag multiple times to specify more than one package.",
@@ -39,18 +39,17 @@ func main() {
 			Name:   "proto",
 			Usage:  "Generates .proto files from Go packages",
 			Action: initCmd(genProtos),
-			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:        "folder, f",
-					Usage:       "All generated .proto files will be written to `FOLDER`.",
-					Destination: &path,
-				},
-			},
+			Flags: append(baseFlags, cli.StringFlag{
+				Name:        "folder, f",
+				Usage:       "All generated .proto files will be written to `FOLDER`.",
+				Destination: &path,
+			}),
 		},
 		{
 			Name:   "rpc",
 			Usage:  "Generates gRPC server implementation",
 			Action: initCmd(genRPCServer),
+			Flags:  baseFlags,
 		},
 	}
 
