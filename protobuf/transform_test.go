@@ -218,6 +218,7 @@ func (s *TransformerSuite) TestTransformStruct() {
 	s.Equal(2, msg.Fields[0].Pos)
 	s.Equal(1, len(msg.Reserved), "should have reserved field")
 	s.Equal(uint(1), msg.Reserved[0])
+	s.Equal(NewLiteralValue("true"), msg.Options["(gogoproto.drop_type_declaration)"], "should drop declaration by default")
 }
 
 func (s *TransformerSuite) TestTransformFuncMultiple() {
@@ -425,6 +426,7 @@ func (s *TransformerSuite) TestTransformEnum() {
 	s.assertEnumVal(enum.Values[0], "FOO", 0)
 	s.assertEnumVal(enum.Values[1], "BAR", 1)
 	s.assertEnumVal(enum.Values[2], "BAR_BAZ", 2)
+	s.Equal(NewLiteralValue("true"), enum.Options["(gogoproto.enum_drop_type_declaration)"], "should drop declaration by default")
 }
 
 func (s *TransformerSuite) TestTransform() {

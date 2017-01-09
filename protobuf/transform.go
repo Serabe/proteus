@@ -143,15 +143,30 @@ func (t *Transformer) createMessageFromTypes(pkg *Package, name string, types []
 }
 
 func (t *Transformer) transformEnum(e *scanner.Enum) *Enum {
-	enum := &Enum{Name: e.Name}
+	enum := &Enum{
+		Name:    e.Name,
+		Options: defaultOptionsForScannedEnum(e),
+	}
+
 	for i, v := range e.Values {
 		enum.Values.Add(toUpperSnakeCase(v), uint(i), nil)
 	}
 	return enum
 }
 
+func defaultOptionsForScannedEnum(e *scanner.Enum) Options {
+	opts := make(Options)
+
+	opts["(gogoproto.enum_drop_type_declaration)"] = NewLiteralValue("true")
+
+	return opts
+}
+
 func (t *Transformer) transformStruct(pkg *Package, s *scanner.Struct) *Message {
-	msg := &Message{Name: s.Name}
+	msg := &Message{
+		Name:    s.Name,
+		Options: defaultOptionsForScannedMessage(s),
+	}
 
 	for i, f := range s.Fields {
 		field := t.transformField(pkg, f, i+1)
@@ -165,6 +180,14 @@ func (t *Transformer) transformStruct(pkg *Package, s *scanner.Struct) *Message 
 	}
 
 	return msg
+}
+
+func defaultOptionsForScannedMessage(s *scanner.Struct) Options {
+	opts := make(Options)
+
+	opts["(gogoproto.drop_type_declaration)"] = NewLiteralValue("true")
+
+	return opts
 }
 
 func (t *Transformer) transformField(pkg *Package, field *scanner.Field, pos int) *Field {
