@@ -54,6 +54,12 @@ const expectedFuncGenerated = `func (s *FooServer) DoFoo(ctx context.Context, in
 	return
 }`
 
+const expectedFuncGeneratedVariadic = `func (s *FooServer) DoFoo(ctx context.Context, in *FooRequest) (result *FooResponse, err error) {
+	result = new(FooResponse)
+	result.Result1 = DoFoo(in.Arg1, in.Arg2, in.Arg3...)
+	return
+}`
+
 const expectedFuncGeneratedWithError = `func (s *FooServer) DoFoo(ctx context.Context, in *FooRequest) (result *FooResponse, err error) {
 	result = new(FooResponse)
 	result.Result1, err = DoFoo(in.Arg1, in.Arg2, in.Arg3)
@@ -107,6 +113,17 @@ func (s *RPCSuite) TestDeclMethod() {
 				Output: protobuf.NewGeneratedNamed("", "FooResponse"),
 			},
 			expectedFuncGenerated,
+		},
+		{
+			"func generated with variadic arg",
+			&protobuf.RPC{
+				Name:       "DoFoo",
+				Method:     "DoFoo",
+				Input:      protobuf.NewGeneratedNamed("", "FooRequest"),
+				Output:     protobuf.NewGeneratedNamed("", "FooResponse"),
+				IsVariadic: true,
+			},
+			expectedFuncGeneratedVariadic,
 		},
 		{
 			"func generated with error",

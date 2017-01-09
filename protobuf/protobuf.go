@@ -240,7 +240,9 @@ type RPC struct {
 	Method string
 	// HasError repors whether the Go function returns an error.
 	HasError bool
-	Input    Type
-	Output   Type
-	Options  Options
+	// IsVariadic reports whether the Go function is variadic or not.
+	IsVariadic bool
+	Input      Type
+	Output     Type
+	Options    Options
 }

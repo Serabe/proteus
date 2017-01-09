@@ -161,6 +161,10 @@ func (g *Generator) genMethodCall(ctx *context, rpc *protobuf.RPC) ast.Expr {
 		call.Fun = ast.NewIdent(fmt.Sprintf("s.%s.%s", rpc.Recv, rpc.Method))
 	}
 
+	if rpc.IsVariadic {
+		call.Ellipsis = token.Pos(1)
+	}
+
 	if !isGenerated(rpc.Input) {
 		call.Args = append(call.Args, ast.NewIdent("in"))
 	} else {

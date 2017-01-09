@@ -87,12 +87,13 @@ func (t *Transformer) transformFunc(pkg *Package, f *scanner.Func, names nameSet
 
 	output, hasError := removeLastError(f.Output)
 	rpc := &RPC{
-		Name:     name,
-		Recv:     receiverName,
-		Method:   f.Name,
-		HasError: hasError,
-		Input:    t.transformInputTypes(pkg, f.Input, names, name),
-		Output:   t.transformOutputTypes(pkg, output, names, name),
+		Name:       name,
+		Recv:       receiverName,
+		Method:     f.Name,
+		HasError:   hasError,
+		IsVariadic: f.IsVariadic,
+		Input:      t.transformInputTypes(pkg, f.Input, names, name),
+		Output:     t.transformOutputTypes(pkg, output, names, name),
 	}
 	if rpc.Input == nil || rpc.Output == nil {
 		return nil
