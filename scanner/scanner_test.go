@@ -256,7 +256,6 @@ func TestScanStruct(t *testing.T) {
 }
 
 func TestScannerScanFunc(t *testing.T) {
-
 	cases := []struct {
 		name      string
 		signature *types.Signature
