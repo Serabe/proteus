@@ -156,9 +156,7 @@ func (t *Transformer) transformEnum(e *scanner.Enum) *Enum {
 
 func defaultOptionsForScannedEnum(e *scanner.Enum) Options {
 	opts := make(Options)
-
 	opts["(gogoproto.enum_drop_type_declaration)"] = NewLiteralValue("true")
-
 	return opts
 }
 
@@ -184,9 +182,7 @@ func (t *Transformer) transformStruct(pkg *Package, s *scanner.Struct) *Message 
 
 func defaultOptionsForScannedMessage(s *scanner.Struct) Options {
 	opts := make(Options)
-
 	opts["(gogoproto.drop_type_declaration)"] = NewLiteralValue("true")
-
 	return opts
 }
 
