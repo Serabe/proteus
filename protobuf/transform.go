@@ -44,6 +44,7 @@ func (t *Transformer) Transform(p *scanner.Package) *Package {
 	pkg := &Package{
 		Name:    toProtobufPkg(p.Path),
 		Path:    p.Path,
+		Imports: []string{"github.com/src-d/protobuf/gogoproto/gogo.proto"},
 		Options: defaultOptionsForPackage(p),
 	}
 
