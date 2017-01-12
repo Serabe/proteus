@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/src-d/proteus"
+	"github.com/src-d/proteus/protobuf"
 	"github.com/src-d/proteus/report"
 	"gopkg.in/urfave/cli.v1"
 )
@@ -129,7 +130,7 @@ func genAll(c *cli.Context) error {
 				filepath.Join(protobufSrc, "protobuf"),
 				filepath.Join(path, p),
 			),
-			fmt.Sprintf("--gofast_out=plugins=grpc:%s", outPath),
+			genAllGoFastOutOption(outPath),
 			proto,
 		)
 		cmd.Stdout = os.Stdout
@@ -140,6 +141,19 @@ func genAll(c *cli.Context) error {
 	}
 
 	return genRPCServer(c)
+}
+
+func genAllGoFastOutOption(outPath string) string {
+	str := "--gofast_out=plugins=grpc"
+	importMappings := protobuf.DefaultMappings.ToGoOutPath()
+
+	if importMappings != "" {
+		str += fmt.Sprintf(",%s", importMappings)
+	}
+
+	str += fmt.Sprintf(":%s", outPath)
+
+	return str
 }
 
 func checkFolder(p string) error {
