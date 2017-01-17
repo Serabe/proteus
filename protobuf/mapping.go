@@ -8,12 +8,21 @@ import (
 // ProtoType represents a protobuf type. It can optionally have a
 // package and it may require an import to work.
 type ProtoType struct {
-	Package    string
-	Basic      bool
-	Name       string
-	Import     string
-	GoImport   string
+	Package string
+	Basic   bool
+	Name    string
+	Import  string
+	// GoImport represent the go package to import to use this type.
+	GoImport string
+	// Decorators define a set of function to apply to each field, message and
+	// package that contain a field with this type.
 	Decorators Decorators
+	// Warn contains the warning message to show if this mapping happens. This string
+	// is passed to fmt.Sprintf with the original type parameter.
+	// For example, if a mapping is defined for Go type "A" to become "B" in
+	// protobuf and the warning message "%s becomes B", then the reported message
+	// will be "A becomes B"
+	Warn string
 }
 
 func (pt *ProtoType) Decorate(p *Package, m *Message, f *Field) {
@@ -65,13 +74,41 @@ var DefaultMappings = TypeMappings{
 	"uint64":  &ProtoType{Name: "uint64", Basic: true},
 	"bool":    &ProtoType{Name: "bool", Basic: true},
 	"string":  &ProtoType{Name: "string", Basic: true},
-	"uint8":   &ProtoType{Name: "uint32", Basic: true},
-	"int8":    &ProtoType{Name: "int32", Basic: true},
-	"byte":    &ProtoType{Name: "uint32", Basic: true},
-	"uint16":  &ProtoType{Name: "uint32", Basic: true},
-	"int16":   &ProtoType{Name: "int32", Basic: true},
-	"int":     &ProtoType{Name: "int32", Basic: true},
-	"uint":    &ProtoType{Name: "uint32", Basic: true},
+	"uint8": &ProtoType{
+		Name:  "uint32",
+		Basic: true,
+		Warn:  "type %s was upgraded to uint32",
+	},
+	"int8": &ProtoType{
+		Name:  "int32",
+		Basic: true,
+		Warn:  "type %s was upgraded to int32",
+	},
+	"byte": &ProtoType{
+		Name:  "uint32",
+		Basic: true,
+		Warn:  "type %s was upgraded to uint32",
+	},
+	"uint16": &ProtoType{
+		Name:  "uint32",
+		Basic: true,
+		Warn:  "type %s was upgraded to uint32",
+	},
+	"int16": &ProtoType{
+		Name:  "int32",
+		Basic: true,
+		Warn:  "type %s was upgraded to int32",
+	},
+	"int": &ProtoType{
+		Name:  "int64",
+		Basic: true,
+		Warn:  "type %s was upgraded to int64",
+	},
+	"uint": &ProtoType{
+		Name:  "uint64",
+		Basic: true,
+		Warn:  "type %s was upgraded to uint64",
+	},
 	"uintptr": &ProtoType{Name: "uint64", Basic: true},
 	"rune":    &ProtoType{Name: "int32", Basic: true},
 	"time.Time": &ProtoType{

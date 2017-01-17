@@ -3,8 +3,10 @@ package protobuf
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 	"testing"
 
+	"github.com/src-d/proteus/report"
 	"github.com/src-d/proteus/resolver"
 	"github.com/src-d/proteus/scanner"
 	"github.com/stretchr/testify/require"
@@ -81,6 +83,7 @@ type TransformerSuite struct {
 }
 
 func (s *TransformerSuite) SetupTest() {
+	report.TestMode()
 	s.t = NewTransformer()
 	s.t.SetMappings(TypeMappings{
 		"url.URL":       &ProtoType{Name: "string", Basic: true},
@@ -88,6 +91,10 @@ func (s *TransformerSuite) SetupTest() {
 	})
 	s.t.SetMappings(nil)
 	s.NotNil(s.t.mappings)
+}
+
+func (s *TransformerSuite) TearDownTest() {
+	report.EndTestMode()
 }
 
 func (s *TransformerSuite) TestFindMapping() {
@@ -109,6 +116,46 @@ func (s *TransformerSuite) TestFindMapping() {
 		} else {
 			s.NotNil(t)
 			s.Equal(c.protobufType, t.Name)
+		}
+	}
+}
+
+func (s *TransformerSuite) TestFindMappingWithWarn() {
+	s.t.SetMappings(TypeMappings{
+		"url.URL": &ProtoType{Name: "string", Basic: true},
+		"int16":   &ProtoType{Name: "int32", Basic: true, Warn: "%s upgraded to int32"},
+	})
+	cases := []struct {
+		name string
+		typ  string
+		warn string
+	}{
+		{
+			"Without Warning",
+			"url.URL",
+			"",
+		},
+		{
+			"With Warning",
+			"int16",
+			"upgraded to int32",
+		},
+	}
+
+	for _, c := range cases {
+		_ = s.t.findMapping(c.typ)
+		stack := report.MessageStack()
+		if c.warn == "" {
+			s.Empty(stack)
+		} else {
+			s.NotEmpty(
+				stack,
+				fmt.Sprintf("stack empty in %s", c.name),
+			)
+			s.True(
+				strings.HasSuffix(stack[len(stack)-1], c.warn),
+				fmt.Sprintf("last message does not match for %s:\nExpected '%s' to end with '%s'", c.name, c.warn, stack[len(stack)-1]),
+			)
 		}
 	}
 }
@@ -165,7 +212,7 @@ func (s *TransformerSuite) TestTransformType() {
 		},
 		{
 			repeated(scanner.NewBasic("int")),
-			NewBasic("int32"),
+			NewBasic("int64"),
 			"",
 		},
 	}
@@ -191,7 +238,7 @@ func (s *TransformerSuite) TestTransformField() {
 		{
 			"Foo",
 			scanner.NewBasic("int"),
-			&Field{Name: "foo", Type: NewBasic("int32"), Options: make(Options)},
+			&Field{Name: "foo", Type: NewBasic("int64"), Options: make(Options)},
 		},
 		{
 			"Bar",
@@ -201,12 +248,12 @@ func (s *TransformerSuite) TestTransformField() {
 		{
 			"BazBar",
 			repeated(scanner.NewBasic("int")),
-			&Field{Name: "baz_bar", Type: NewBasic("int32"), Repeated: true, Options: make(Options)},
+			&Field{Name: "baz_bar", Type: NewBasic("int64"), Repeated: true, Options: make(Options)},
 		},
 		{
 			"CustomID",
 			scanner.NewBasic("int"),
-			&Field{Name: "custom_id", Type: NewBasic("int32"), Options: Options{"(gogoproto.customname)": NewStringValue("CustomID")}},
+			&Field{Name: "custom_id", Type: NewBasic("int64"), Options: Options{"(gogoproto.customname)": NewStringValue("CustomID")}},
 		},
 		{
 			"Invalid",
@@ -275,7 +322,7 @@ func (s *TransformerSuite) TestTransformFuncMultiple() {
 	s.Equal("DoFooRequest", msg.Name)
 	s.Equal(2, len(msg.Fields), "DoFooRequest should have same fields as args")
 	s.assertField(msg.Fields[0], "arg1", NewNamed("foo", "Bar"))
-	s.assertField(msg.Fields[1], "arg2", NewBasic("int32"))
+	s.assertField(msg.Fields[1], "arg2", NewBasic("int64"))
 
 	msg = pkg.Messages[1]
 	s.Equal("DoFooResponse", msg.Name)
@@ -362,7 +409,7 @@ func (s *TransformerSuite) TestTransformFunc1BasicArg() {
 	msg := pkg.Messages[0]
 	s.Equal("DoFooRequest", msg.Name)
 	s.Equal(1, len(msg.Fields), "DoFooRequest should have same fields as args")
-	s.assertField(msg.Fields[0], "arg1", NewBasic("int32"))
+	s.assertField(msg.Fields[0], "arg1", NewBasic("int64"))
 
 	msg = pkg.Messages[1]
 	s.Equal("DoFooResponse", msg.Name)
@@ -432,7 +479,7 @@ func (s *TransformerSuite) TestTransformFuncRepeatedSingle() {
 	msg := pkg.Messages[0]
 	s.Equal("DoFooRequest", msg.Name)
 	s.Equal(1, len(msg.Fields), "DoFooRequest should have same fields as args")
-	s.assertField(msg.Fields[0], "arg1", NewBasic("int32"))
+	s.assertField(msg.Fields[0], "arg1", NewBasic("int64"))
 	s.True(msg.Fields[0].Repeated, "field should be repeated")
 
 	msg = pkg.Messages[1]

@@ -271,6 +271,10 @@ func (t *Transformer) findMapping(name string) *ProtoType {
 		typ = DefaultMappings[name]
 	}
 
+	if typ != nil && typ.Warn != "" {
+		report.Warn(typ.Warn, name)
+	}
+
 	return typ
 }
 
