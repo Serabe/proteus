@@ -8,11 +8,16 @@ import (
 // ProtoType represents a protobuf type. It can optionally have a
 // package and it may require an import to work.
 type ProtoType struct {
-	Package  string
-	Basic    bool
-	Name     string
-	Import   string
-	GoImport string
+	Package    string
+	Basic      bool
+	Name       string
+	Import     string
+	GoImport   string
+	Decorators Decorators
+}
+
+func (pt *ProtoType) Decorate(p *Package, m *Message, f *Field) {
+	pt.Decorators.Run(p, m, f)
 }
 
 // Type returns the type representation of the protobuf type.
@@ -21,6 +26,29 @@ func (t *ProtoType) Type() Type {
 		return NewBasic(t.Name)
 	}
 	return NewNamed(t.Package, t.Name)
+}
+
+type Decorator func(*Package, *Message, *Field)
+type Decorators []Decorator
+
+func NewDecorators(fns ...func(*Package, *Message, *Field)) Decorators {
+	var decorators Decorators
+
+	for _, fn := range fns {
+		decorators = append(decorators, Decorator(fn))
+	}
+
+	return decorators
+}
+
+func (d Decorator) Run(p *Package, m *Message, f *Field) {
+	d(p, m, f)
+}
+
+func (ds Decorators) Run(p *Package, m *Message, f *Field) {
+	for _, d := range ds {
+		d.Run(p, m, f)
+	}
 }
 
 // TypeMappings is a mapping between Go types and protobuf types.
@@ -51,8 +79,32 @@ var DefaultMappings = TypeMappings{
 		Package:  "google.protobuf",
 		Import:   "google/protobuf/timestamp.proto",
 		GoImport: "github.com/gogo/protobuf/types",
+		Decorators: NewDecorators(
+			func(p *Package, m *Message, f *Field) {
+				if f.Options == nil {
+					f.Options = make(Options)
+				}
+				f.Options["(gogoproto.stdtime)"] = NewLiteralValue("true")
+				f.Options["(gogoproto.nullable)"] = NewLiteralValue("false")
+			},
+		),
 	},
-	"time.Duration": &ProtoType{Name: "int64", Basic: true},
+	"time.Duration": &ProtoType{
+		Name:     "int64",
+		Basic:    true,
+		Package:  "google.protobuf",
+		Import:   "google/protobuf/duration.proto",
+		GoImport: "github.com/gogo/protobuf/types",
+		Decorators: NewDecorators(
+			func(p *Package, m *Message, f *Field) {
+				if f.Options == nil {
+					f.Options = make(Options)
+				}
+				f.Options["(gogoproto.stdduration)"] = NewLiteralValue("true")
+				f.Options["(gogoproto.nullable)"] = NewLiteralValue("false")
+			},
+		),
+	},
 }
 
 // ToGoOutPath returns the set of import mappings for the --go_out family of options.

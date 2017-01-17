@@ -113,6 +113,27 @@ func (s *TransformerSuite) TestFindMapping() {
 	}
 }
 
+func (s *TransformerSuite) TestMappingDecorators() {
+	s.t.SetMappings(TypeMappings{
+		"int": &ProtoType{
+			Name:  "int64",
+			Basic: true,
+			Decorators: NewDecorators(
+				func(p *Package, m *Message, f *Field) {
+					f.Options["greeting"] = NewStringValue("hola")
+				},
+			),
+		},
+	})
+
+	f := s.t.transformField(&Package{}, &Message{}, &scanner.Field{
+		Name: "MyField",
+		Type: scanner.NewBasic("int"),
+	}, 1)
+
+	s.Equal(NewStringValue("hola"), f.Options["greeting"], "option was added")
+}
+
 func (s *TransformerSuite) TestTransformType() {
 	cases := []struct {
 		typ      scanner.Type
@@ -151,7 +172,7 @@ func (s *TransformerSuite) TestTransformType() {
 
 	for _, c := range cases {
 		var pkg Package
-		t := s.t.transformType(&pkg, c.typ)
+		t := s.t.transformType(&pkg, c.typ, &Message{}, &Field{})
 		s.Equal(c.expected, t)
 
 		if c.imported != "" {
@@ -195,7 +216,7 @@ func (s *TransformerSuite) TestTransformField() {
 	}
 
 	for _, c := range cases {
-		f := s.t.transformField(&Package{}, &scanner.Field{
+		f := s.t.transformField(&Package{}, &Message{}, &scanner.Field{
 			Name: c.name,
 			Type: c.typ,
 		}, 0)
