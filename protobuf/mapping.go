@@ -40,7 +40,7 @@ func (t *ProtoType) Type() Type {
 type Decorator func(*Package, *Message, *Field)
 type Decorators []Decorator
 
-func NewDecorators(fns ...func(*Package, *Message, *Field)) Decorators {
+func NewDecorators(fns ...Decorator) Decorators {
 	var decorators Decorators
 
 	for _, fn := range fns {
