@@ -12,7 +12,7 @@ type ProtoType struct {
 	Basic   bool
 	Name    string
 	Import  string
-	// GoImport represent the go package to import to use this type.
+	// GoImport represents the go package to import to use this type.
 	GoImport string
 	// Decorators define a set of function to apply to each field, message and
 	// package that contain a field with this type.

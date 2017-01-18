@@ -195,7 +195,7 @@ func (t *Transformer) transformField(pkg *Package, msg *Message, field *scanner.
 		repeated = field.Type.IsRepeated()
 	)
 
-	pField := &Field{
+	f := &Field{
 		Name:     toLowerSnakeCase(field.Name),
 		Options:  defaultOptionsForStructField(field),
 		Pos:      pos,
@@ -207,17 +207,17 @@ func (t *Transformer) transformField(pkg *Package, msg *Message, field *scanner.
 	// it a bit differently.
 	if isByteSlice(field.Type) {
 		typ = NewBasic("bytes")
-		pField.Repeated = false
+		f.Repeated = false
 	} else {
-		typ = t.transformType(pkg, field.Type, msg, pField)
+		typ = t.transformType(pkg, field.Type, msg, f)
 		if typ == nil {
 			return nil
 		}
 	}
 
-	pField.Type = typ
+	f.Type = typ
 
-	return pField
+	return f
 }
 
 func defaultOptionsForStructField(field *scanner.Field) Options {
