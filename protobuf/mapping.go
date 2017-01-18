@@ -37,7 +37,14 @@ func (t *ProtoType) Type() Type {
 	return NewNamed(t.Package, t.Name)
 }
 
+// Decorator is run when a type is resolved. The decorator gets the package, message
+// and field this type was resolved for.
+// In some corner cases, a type might need to be resolved not for used in a field. In
+// such cases, an empty structure is passed for each argument that does not exists.
 type Decorator func(*Package, *Message, *Field)
+
+// Decorators is a collection of Decorator that simplifies running them all with a
+// given set of options.
 type Decorators []Decorator
 
 func NewDecorators(fns ...Decorator) Decorators {
