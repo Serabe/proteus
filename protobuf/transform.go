@@ -245,25 +245,33 @@ func (t *Transformer) transformType(pkg *Package, typ scanner.Type, msg *Message
 		if protoType != nil {
 			pkg.Import(protoType)
 			protoType.Decorate(pkg, msg, field)
-			return protoType.Type()
+			n := protoType.Type()
+			n.SetSource(ty)
+			return n
 		}
 
 		pkg.ImportFromPath(ty.Path)
-		return NewNamed(toProtobufPkg(ty.Path), ty.Name)
+		n := NewNamed(toProtobufPkg(ty.Path), ty.Name)
+		n.SetSource(ty)
+		return n
 	case *scanner.Basic:
 		protoType := t.findMapping(ty.Name)
 		if protoType != nil {
 			pkg.Import(protoType)
 			protoType.Decorate(pkg, msg, field)
-			return protoType.Type()
+			b := protoType.Type()
+			b.SetSource(ty)
+			return b
 		}
 
 		report.Warn("basic type %q is not defined in the mappings, ignoring", ty.Name)
 	case *scanner.Map:
-		return NewMap(
+		m := NewMap(
 			t.transformType(pkg, ty.Key, msg, field),
 			t.transformType(pkg, ty.Value, msg, field),
 		)
+		m.SetSource(ty)
+		return m
 	}
 
 	return nil
