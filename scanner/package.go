@@ -43,11 +43,14 @@ func (p *Package) collectEnums(ctx *context) {
 type Type interface {
 	SetRepeated(bool)
 	IsRepeated() bool
+	SetNullable(bool)
+	IsNullable() bool
 }
 
 // BaseType contains the common fields for all the types.
 type BaseType struct {
 	Repeated bool
+	Nullable bool
 }
 
 func newBaseType() *BaseType {
@@ -61,6 +64,12 @@ func (t *BaseType) IsRepeated() bool { return t.Repeated }
 
 // SetRepeated sets the type as repeated or not repeated.
 func (t *BaseType) SetRepeated(v bool) { t.Repeated = v }
+
+// IsNullable reports wether the type is a pointer or not.
+func (t *BaseType) IsNullable() bool { return t.Nullable }
+
+// SetNullable sets the type as pointer.
+func (t *BaseType) SetNullable(v bool) { t.Nullable = v }
 
 // Basic is a basic type, which only is identified by its name.
 type Basic struct {

@@ -226,6 +226,10 @@ func defaultOptionsForStructField(field *scanner.Field) Options {
 		opts["(gogoproto.customname)"] = NewStringValue(field.Name)
 	}
 
+	if !field.Type.IsNullable() {
+		opts["(gogoproto.nullable)"] = NewLiteralValue("false")
+	}
+
 	return opts
 }
 

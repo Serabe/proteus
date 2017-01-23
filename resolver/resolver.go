@@ -119,21 +119,29 @@ func (r *Resolver) resolveStruct(s *scanner.Struct, info *packagesInfo) {
 func (r *Resolver) resolveType(typ scanner.Type, info *packagesInfo) (result scanner.Type) {
 	switch t := typ.(type) {
 	case *scanner.Named:
+		fmt.Printf("%s ", t.Name)
+		if t.IsNullable() {
+			fmt.Print(" (NULLABLE) ")
+		}
 		if r.isCustomType(t) {
+			fmt.Println("is custom type")
 			return t
 		}
 
 		if !info.hasPackage(t.Path) {
+			fmt.Println("is from an unknown package")
 			report.Warn("type %q of package %s will be ignored because it was not present on the scan path", t.Name, t.Path)
 			return nil
 		}
 
 		alias := info.aliasOf(t)
 		if alias != nil {
+			fmt.Println("is an alias")
 			return alias
 		}
 
 		if info.isStruct(t.String()) {
+			fmt.Println("is an struct")
 			info.markStruct(t.String())
 		}
 

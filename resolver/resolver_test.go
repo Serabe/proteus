@@ -146,7 +146,7 @@ func (s *ResolverSuite) TestResolve() {
 			scanner.NewBasic("int32"),
 		},
 		Output: []scanner.Type{
-			scanner.NewNamed(projectPath("fixtures/subpkg"), "Point"),
+			nullable(scanner.NewNamed(projectPath("fixtures/subpkg"), "Point")),
 		},
 		Receiver: scanner.NewNamed(projectPath("fixtures/subpkg"), "Point"),
 	}, findFuncByName("GeneratedMethod", pkgs[1].Funcs))
@@ -157,9 +157,9 @@ func (s *ResolverSuite) TestResolve() {
 			scanner.NewBasic("bool"),
 		},
 		Output: []scanner.Type{
-			scanner.NewNamed(projectPath("fixtures/subpkg"), "Point"),
+			nullable(scanner.NewNamed(projectPath("fixtures/subpkg"), "Point")),
 		},
-		Receiver: scanner.NewNamed(projectPath("fixtures/subpkg"), "Point"),
+		Receiver: nullable(scanner.NewNamed(projectPath("fixtures/subpkg"), "Point")),
 	}, findFuncByName("GeneratedMethodOnPointer", pkgs[1].Funcs))
 
 	s.Equal(&scanner.Func{
@@ -168,7 +168,7 @@ func (s *ResolverSuite) TestResolve() {
 		Output: []scanner.Type{
 			scanner.NewBasic("string"),
 		},
-		Receiver: scanner.NewNamed(projectPath("fixtures/subpkg"), "MyContainer"),
+		Receiver: nullable(scanner.NewNamed(projectPath("fixtures/subpkg"), "MyContainer")),
 	}, findFuncByName("Name", pkgs[1].Funcs))
 }
 
@@ -208,4 +208,9 @@ func findFuncByName(name string, fns []*scanner.Func) *scanner.Func {
 	}
 
 	return nil
+}
+
+func nullable(t scanner.Type) scanner.Type {
+	t.SetNullable(true)
+	return t
 }

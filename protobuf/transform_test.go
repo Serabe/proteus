@@ -238,22 +238,57 @@ func (s *TransformerSuite) TestTransformField() {
 		{
 			"Foo",
 			scanner.NewBasic("int"),
-			&Field{Name: "foo", Type: NewBasic("int64"), Options: make(Options)},
+			&Field{
+				Name: "foo",
+				Type: NewBasic("int64"),
+				Options: Options{
+					"(gogoproto.nullable)": NewLiteralValue("false"),
+				},
+			},
 		},
 		{
 			"Bar",
 			repeated(scanner.NewBasic("byte")),
-			&Field{Name: "bar", Type: NewBasic("bytes"), Options: make(Options)},
+			&Field{
+				Name: "bar",
+				Type: NewBasic("bytes"),
+				Options: Options{
+					"(gogoproto.nullable)": NewLiteralValue("false"),
+				},
+			},
 		},
 		{
 			"BazBar",
 			repeated(scanner.NewBasic("int")),
-			&Field{Name: "baz_bar", Type: NewBasic("int64"), Repeated: true, Options: make(Options)},
+			&Field{
+				Name:     "baz_bar",
+				Type:     NewBasic("int64"),
+				Repeated: true,
+				Options: Options{
+					"(gogoproto.nullable)": NewLiteralValue("false"),
+				},
+			},
 		},
 		{
 			"CustomID",
 			scanner.NewBasic("int"),
-			&Field{Name: "custom_id", Type: NewBasic("int64"), Options: Options{"(gogoproto.customname)": NewStringValue("CustomID")}},
+			&Field{
+				Name: "custom_id",
+				Type: NewBasic("int64"),
+				Options: Options{
+					"(gogoproto.customname)": NewStringValue("CustomID"),
+					"(gogoproto.nullable)":   NewLiteralValue("false"),
+				},
+			},
+		},
+		{
+			"NullableType",
+			nullable(scanner.NewNamed("my/pckg", "hello")),
+			&Field{
+				Name:    "nullable_type",
+				Type:    NewNamed("my.pckg", "hello"),
+				Options: Options{},
+			},
 		},
 		{
 			"Invalid",
@@ -290,7 +325,8 @@ func (s *TransformerSuite) TestTransformStruct() {
 	s.Equal("Foo", msg.Name)
 	s.Equal(1, len(msg.Fields), "should have one field")
 	s.Equal(2, msg.Fields[0].Pos)
-	s.Equal(0, len(msg.Fields[0].Options))
+	s.Equal(1, len(msg.Fields[0].Options))
+	s.Contains(msg.Fields[0].Options, "(gogoproto.nullable)")
 	s.Equal(1, len(msg.Reserved), "should have reserved field")
 	s.Equal(uint(1), msg.Reserved[0])
 	s.Equal(NewLiteralValue("false"), msg.Options["(gogoproto.typedecl)"], "should drop declaration by default")
@@ -478,6 +514,7 @@ func (s *TransformerSuite) TestTransformFuncRepeatedSingle() {
 	s.Equal(2, len(pkg.Messages), "two messages should have been created")
 	msg := pkg.Messages[0]
 	s.Equal("DoFooRequest", msg.Name)
+	s.NotContains(msg.Options, "(gogoproto.typedecl)", "should not have the option typedecl")
 	s.Equal(1, len(msg.Fields), "DoFooRequest should have same fields as args")
 	s.assertField(msg.Fields[0], "arg1", NewBasic("int64"))
 	s.True(msg.Fields[0].Repeated, "field should be repeated")
@@ -577,6 +614,11 @@ func TestTransformer(t *testing.T) {
 
 func repeated(t scanner.Type) scanner.Type {
 	t.SetRepeated(true)
+	return t
+}
+
+func nullable(t scanner.Type) scanner.Type {
+	t.SetNullable(true)
 	return t
 }
 

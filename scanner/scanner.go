@@ -186,6 +186,7 @@ func scanType(typ types.Type) (t Type) {
 		t.SetRepeated(true)
 	case *types.Pointer:
 		t = scanType(u.Elem())
+		t.SetNullable(true)
 	case *types.Map:
 		key := scanType(u.Key())
 		val := scanType(u.Elem())
