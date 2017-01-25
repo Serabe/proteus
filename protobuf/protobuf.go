@@ -192,6 +192,34 @@ func (n *Named) Source() scanner.Type {
 	return n.Src
 }
 
+type Alias struct {
+	Type       Type
+	Underlying Type
+	Src        scanner.Type
+}
+
+func NewAlias(typ, underlying Type) *Alias {
+	return &Alias{
+		Type:       typ,
+		Underlying: underlying,
+	}
+}
+
+// SetSource sets the scanner type source for a given protobuf named type.
+func (a *Alias) SetSource(t scanner.Type) {
+	a.Src = t
+}
+
+// Source returns the scanner source type for a given protobuf type
+func (a *Alias) Source() scanner.Type {
+	return a.Src
+}
+
+func (a Alias) String() string {
+	return a.Underlying.String()
+	//return fmt.Sprintf("type %s %s", a.Type.String(), a.Underlying.String())
+}
+
 // Basic is one of the basic types of protobuf.
 type Basic struct {
 	Name string
@@ -247,6 +275,7 @@ func (m *Map) Source() scanner.Type {
 func (*Named) isType() {}
 func (*Basic) isType() {}
 func (*Map) isType()   {}
+func (*Alias) isType() {}
 
 // Enum is the representation of a protobuf enumeration.
 type Enum struct {

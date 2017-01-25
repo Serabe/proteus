@@ -215,6 +215,17 @@ func (s *TransformerSuite) TestTransformType() {
 			NewBasic("int64"),
 			"",
 		},
+		{
+			scanner.NewAlias(
+				scanner.NewNamed("foo", "Bar"),
+				scanner.NewBasic("string"),
+			),
+			NewAlias(
+				NewNamed("foo", "Bar"),
+				NewBasic("string"),
+			),
+			"foo/generated.proto",
+		},
 	}
 
 	for _, c := range cases {
@@ -240,22 +251,18 @@ func (s *TransformerSuite) TestTransformField() {
 			"Foo",
 			scanner.NewBasic("int"),
 			&Field{
-				Name: "foo",
-				Type: NewBasic("int64"),
-				Options: Options{
-					"(gogoproto.nullable)": NewLiteralValue("false"),
-				},
+				Name:    "foo",
+				Type:    NewBasic("int64"),
+				Options: Options{},
 			},
 		},
 		{
 			"Bar",
 			repeated(scanner.NewBasic("byte")),
 			&Field{
-				Name: "bar",
-				Type: NewBasic("bytes"),
-				Options: Options{
-					"(gogoproto.nullable)": NewLiteralValue("false"),
-				},
+				Name:    "bar",
+				Type:    NewBasic("bytes"),
+				Options: Options{},
 			},
 		},
 		{
@@ -265,9 +272,7 @@ func (s *TransformerSuite) TestTransformField() {
 				Name:     "baz_bar",
 				Type:     NewBasic("int64"),
 				Repeated: true,
-				Options: Options{
-					"(gogoproto.nullable)": NewLiteralValue("false"),
-				},
+				Options:  Options{},
 			},
 		},
 		{
@@ -278,7 +283,6 @@ func (s *TransformerSuite) TestTransformField() {
 				Type: NewBasic("int64"),
 				Options: Options{
 					"(gogoproto.customname)": NewStringValue("CustomID"),
-					"(gogoproto.nullable)":   NewLiteralValue("false"),
 				},
 			},
 		},
@@ -332,8 +336,7 @@ func (s *TransformerSuite) TestTransformStruct() {
 	s.Equal("Foo", msg.Name)
 	s.Equal(1, len(msg.Fields), "should have one field")
 	s.Equal(2, msg.Fields[0].Pos)
-	s.Equal(1, len(msg.Fields[0].Options))
-	s.Contains(msg.Fields[0].Options, "(gogoproto.nullable)")
+	s.Equal(0, len(msg.Fields[0].Options))
 	s.Equal(1, len(msg.Reserved), "should have reserved field")
 	s.Equal(uint(1), msg.Reserved[0])
 	s.Equal(NewLiteralValue("false"), msg.Options["(gogoproto.typedecl)"], "should drop declaration by default")

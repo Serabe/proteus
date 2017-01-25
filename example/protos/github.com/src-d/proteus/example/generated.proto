@@ -13,9 +13,8 @@ message Category {
 	google.protobuf.Timestamp updated_at = 3 [(gogoproto.nullable) = false, (gogoproto.stdtime) = true];
 	google.protobuf.Timestamp deleted_at = 4 [(gogoproto.nullable) = false, (gogoproto.stdtime) = true];
 	string name = 5;
-	github.com.srcd.proteus.example.Type type = 6;
-	string color = 7;
-	github.com.srcd.proteus.example.CategoryOptions options = 8;
+	string color = 6 [(gogoproto.casttype) = "Color"];
+	github.com.srcd.proteus.example.CategoryOptions options = 7 [(gogoproto.nullable) = false];
 }
 
 message CategoryOptions {
@@ -32,8 +31,7 @@ message Product {
 	google.protobuf.Timestamp deleted_at = 4 [(gogoproto.nullable) = false, (gogoproto.stdtime) = true];
 	string name = 5;
 	double price = 6;
-	repeated string tags = 7;
-	int64 category_id = 8 [(gogoproto.customname) = "CategoryID"];
+	int64 category_id = 7 [(gogoproto.customname) = "CategoryID"];
 }
 
 enum Type {

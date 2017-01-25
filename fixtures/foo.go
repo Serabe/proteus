@@ -20,7 +20,7 @@ type Foo struct {
 
 // IntList ...
 //proteus:generate
-type IntList []int
+type IntList int
 
 // Qux ...
 type Qux struct {

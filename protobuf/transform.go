@@ -272,9 +272,31 @@ func (t *Transformer) transformType(pkg *Package, typ scanner.Type, msg *Message
 		)
 		m.SetSource(ty)
 		return m
+	case *scanner.Alias:
+		n := NewAlias(
+			t.transformType(pkg, ty.Type, msg, field),
+			t.transformType(pkg, ty.Underlying, msg, field),
+		)
+		n.SetSource(ty)
+		if field.Options == nil {
+			field.Options = make(Options)
+		}
+		field.Options["(gogoproto.casttype)"] = NewStringValue(castType(pkg, n.Type))
+		return n
 	}
 
 	return nil
+}
+
+func castType(pkg *Package, typ Type) string {
+	switch t := typ.Source().(type) {
+	case *scanner.Named:
+		if pkg.Path == t.Path {
+			return t.Name
+		}
+		return t.TypeString()
+	}
+	return typ.Source().TypeString()
 }
 
 func (t *Transformer) findMapping(name string) *ProtoType {

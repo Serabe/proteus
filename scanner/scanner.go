@@ -87,7 +87,14 @@ func (s *Scanner) Scan() ([]*Package, error) {
 }
 
 func (s *Scanner) scanPackage(p string) (*Package, error) {
-	pkg, err := s.importer.Import(p)
+	pkg, err := s.importer.ImportWithFilters(
+		p,
+		source.FileFilters([]source.FileFilter{
+			func(pkg, file string, typ source.FileType) bool {
+				return !strings.HasSuffix(file, ".pb.go")
+			},
+		}),
+	)
 	if err != nil {
 		return nil, err
 	}

@@ -281,6 +281,17 @@ You can find an example of a *real* use case on the [example](https://github.com
 
 - Extensible mapping and options via plugins (waiting for Go 1.8 release).
 
+### Known Limitations
+
+The following is a list of known limitations and the current state of them.
+
+* Type declarations to arrays or slices are not supported (`type IntList
+  []int`). This requires the creation of a new gogoprotobuf plugins.
+* Only `{,u}int32` and `{,u}int64` is supported in protobuf. Therefore, all
+  `{,u}int` types are upgraded to the next size and a warning is printed. Same
+  thing happens with `float`s and `double`s.
+* 
+
 ### Contribute
 
 If you are interested on contributing to **proteus**, open an [issue](https://github.com/src-d/proteus/issues) explaining which missing functionality you want to work in, and we will guide you through the implementation, and tell you beforehand if that is a functionality we might consider merging in the first place.

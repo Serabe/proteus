@@ -8,9 +8,11 @@ import "time"
 type Product struct {
 	Model
 
-	Name       string
-	Price      float64
-	Tags       Tags
+	Name  string
+	Price float64
+
+	// This is not yet supported
+	//	Tags       Tags
 	CategoryID int64
 	// Category will not be generated because we explicitly said so.
 	Category Category `proteus:"-"`
@@ -20,8 +22,8 @@ type Product struct {
 type Category struct {
 	Model
 
-	Name    string
-	Type    Type
+	Name string
+	//Type    Type
 	Color   Color
 	Options CategoryOptions
 }
