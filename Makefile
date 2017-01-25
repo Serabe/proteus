@@ -14,3 +14,9 @@ test:
 			rm $(COVERAGE_PROFILE); \
 		fi; \
 	done;
+reinstall:
+	- rm example/**.pb.go
+	- rm `which proteus`
+	- go install ./cli/proteus
+regenerate:
+	- make -C example regenerate
