@@ -154,6 +154,7 @@ type Type interface {
 	isType()
 	SetSource(scanner.Type)
 	Source() scanner.Type
+	IsNullable() bool
 }
 
 // Named is a type which has a name and is defined somewhere else, maybe even
@@ -192,6 +193,14 @@ func (n *Named) Source() scanner.Type {
 	return n.Src
 }
 
+func (n *Named) IsNullable() bool {
+	if src := n.Source(); src != nil {
+		return src.IsNullable()
+	}
+
+	return true
+}
+
 type Alias struct {
 	Type       Type
 	Underlying Type
@@ -220,6 +229,14 @@ func (a Alias) String() string {
 	//return fmt.Sprintf("type %s %s", a.Type.String(), a.Underlying.String())
 }
 
+func (a Alias) IsNullable() bool {
+	if src := a.Source(); src != nil {
+		return src.IsNullable()
+	}
+
+	return a.Type.IsNullable()
+}
+
 // Basic is one of the basic types of protobuf.
 type Basic struct {
 	Name string
@@ -237,13 +254,17 @@ func (b Basic) String() string {
 }
 
 // SetSource sets the scanner type source for a given protobuf basic type.
-func (s *Basic) SetSource(t scanner.Type) {
-	s.Src = t
+func (b *Basic) SetSource(t scanner.Type) {
+	b.Src = t
 }
 
 // Source returns the scanner source type for a given protobuf basic type
-func (s *Basic) Source() scanner.Type {
-	return s.Src
+func (b *Basic) Source() scanner.Type {
+	return b.Src
+}
+
+func (b *Basic) IsNullable() bool {
+	return false
 }
 
 // Map is a key-value map type.
@@ -270,6 +291,10 @@ func (m *Map) SetSource(t scanner.Type) {
 // Source returns the scanner source type for a given protobuf map type
 func (m *Map) Source() scanner.Type {
 	return m.Src
+}
+
+func (m *Map) IsNullable() bool {
+	return false
 }
 
 func (*Named) isType() {}

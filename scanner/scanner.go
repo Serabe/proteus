@@ -93,6 +93,9 @@ func (s *Scanner) scanPackage(p string) (*Package, error) {
 			func(pkg, file string, typ source.FileType) bool {
 				return !strings.HasSuffix(file, ".pb.go")
 			},
+			func(pkg, file string, typ source.FileType) bool {
+				return !strings.HasSuffix(file, ".proteus.go")
+			},
 		}),
 	)
 	if err != nil {

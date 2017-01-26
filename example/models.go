@@ -1,6 +1,9 @@
 package example
 
-import "time"
+import (
+	"math/rand"
+	"time"
+)
 
 //go:generate proteus -p github.com/src-d/proteus/example -f $GOPATH/src/github.com/src-d/proteus/example/protos
 
@@ -72,4 +75,21 @@ type User struct {
 	Username string
 	Password string
 	Email    string
+}
+
+//proteus:generate
+func RandomNumber(mean, std float64) float64 {
+	return rand.NormFloat64()*std + mean
+}
+
+//proteus:generate
+func RandomCategory() CategoryOptions {
+	return CategoryOptions{
+		ShowPrices: RandomBool(),
+		CanBuy:     RandomBool(),
+	}
+}
+
+func RandomBool() bool {
+	return rand.Float32() < 0.5
 }

@@ -137,12 +137,18 @@ func (t *Transformer) createMessageFromTypes(pkg *Package, name string, types []
 	msg := &Message{Name: name}
 	for i, typ := range types {
 		f := t.transformField(pkg, msg, &scanner.Field{
-			Name: fmt.Sprintf("%s%d", fieldPrefix, i+1),
+			Name: fmt.Sprintf("%s%d", capitalize(fieldPrefix), i+1),
 			Type: typ,
 		}, i+1)
-		msg.Fields = append(msg.Fields, f)
+		if f != (*Field)(nil) {
+			msg.Fields = append(msg.Fields, f)
+		}
 	}
 	return msg
+}
+
+func capitalize(s string) string {
+	return strings.ToUpper(s[0:1]) + s[1:len(s)]
 }
 
 func (t *Transformer) transformEnum(e *scanner.Enum) *Enum {
@@ -171,13 +177,12 @@ func (t *Transformer) transformStruct(pkg *Package, s *scanner.Struct) *Message 
 
 	for i, f := range s.Fields {
 		field := t.transformField(pkg, msg, f, i+1)
-		if field == nil {
+		if field == (*Field)(nil) {
 			msg.Reserve(uint(i) + 1)
 			report.Warn("field %q of struct %q has an invalid type, ignoring field but reserving its position", f.Name, s.Name)
-			continue
+		} else {
+			msg.Fields = append(msg.Fields, field)
 		}
-
-		msg.Fields = append(msg.Fields, field)
 	}
 
 	return msg

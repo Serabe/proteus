@@ -34,10 +34,27 @@ message Product {
 	int64 category_id = 7 [(gogoproto.customname) = "CategoryID"];
 }
 
+message RandomCategoryRequest {
+}
+
+message RandomNumberRequest {
+	double arg1 = 1;
+	double arg2 = 2;
+}
+
+message RandomNumberResponse {
+	double result1 = 1;
+}
+
 enum Type {
 	option (gogoproto.enumdecl) = false;
 	PUBLIC = 0;
 	PRIVATE = 1;
 	CUSTOM = 2;
+}
+
+service ExampleService {
+	rpc RandomCategory (github.com.srcd.proteus.example.RandomCategoryRequest) returns (github.com.srcd.proteus.example.CategoryOptions);
+	rpc RandomNumber (github.com.srcd.proteus.example.RandomNumberRequest) returns (github.com.srcd.proteus.example.RandomNumberResponse);
 }
 
