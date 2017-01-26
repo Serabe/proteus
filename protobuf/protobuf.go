@@ -193,6 +193,7 @@ func (n *Named) Source() scanner.Type {
 	return n.Src
 }
 
+// IsNullable returns whether the type can be nulled or not.
 func (n *Named) IsNullable() bool {
 	if src := n.Source(); src != nil {
 		return src.IsNullable()
@@ -201,12 +202,14 @@ func (n *Named) IsNullable() bool {
 	return true
 }
 
+// Alias represent a type declaration from one type to another.
 type Alias struct {
 	Type       Type
 	Underlying Type
 	Src        scanner.Type
 }
 
+// NewAlias returns a new Alias
 func NewAlias(typ, underlying Type) *Alias {
 	return &Alias{
 		Type:       typ,
@@ -226,9 +229,9 @@ func (a *Alias) Source() scanner.Type {
 
 func (a Alias) String() string {
 	return a.Underlying.String()
-	//return fmt.Sprintf("type %s %s", a.Type.String(), a.Underlying.String())
 }
 
+// IsNullable returns whether an alias can be nulled or not
 func (a Alias) IsNullable() bool {
 	if src := a.Source(); src != nil {
 		return src.IsNullable()

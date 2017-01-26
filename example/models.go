@@ -26,6 +26,7 @@ type Category struct {
 	Model
 
 	Name string
+	// Enums are not fully supported yet
 	//Type    Type
 	Color   Color
 	Options CategoryOptions

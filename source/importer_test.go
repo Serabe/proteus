@@ -37,7 +37,7 @@ func TestParseSourceFiles(t *testing.T) {
 }
 
 func TestFileFilters(t *testing.T) {
-	fs := FileFilters([]FileFilter{
+	fs := FileFilters{
 		func(pkgPath, file string, typ FileType) bool {
 			return pkgPath == "a"
 		},
@@ -47,7 +47,7 @@ func TestFileFilters(t *testing.T) {
 		func(pkgPath, file string, typ FileType) bool {
 			return typ == GoFile
 		},
-	})
+	}
 
 	require.True(t, fs.KeepFile("a", "a", GoFile))
 	require.False(t, fs.KeepFile("b", "a", GoFile))

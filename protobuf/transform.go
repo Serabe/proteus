@@ -140,7 +140,7 @@ func (t *Transformer) createMessageFromTypes(pkg *Package, name string, types []
 			Name: fmt.Sprintf("%s%d", capitalize(fieldPrefix), i+1),
 			Type: typ,
 		}, i+1)
-		if f != (*Field)(nil) {
+		if f != nil {
 			msg.Fields = append(msg.Fields, f)
 		}
 	}
@@ -177,7 +177,7 @@ func (t *Transformer) transformStruct(pkg *Package, s *scanner.Struct) *Message 
 
 	for i, f := range s.Fields {
 		field := t.transformField(pkg, msg, f, i+1)
-		if field == (*Field)(nil) {
+		if field == nil {
 			msg.Reserve(uint(i) + 1)
 			report.Warn("field %q of struct %q has an invalid type, ignoring field but reserving its position", f.Name, s.Name)
 		} else {

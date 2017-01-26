@@ -144,7 +144,7 @@ func (s *ResolverSuite) TestResolve() {
 
 	aliasTypeType, ok := aliasType.Type.(*scanner.Named)
 	s.True(ok, "Alias is a named type")
-	s.Equal("IntList", aliasTypeType.Name, "alias name")
+	s.Equal("MyInt", aliasTypeType.Name, "alias name")
 
 	basic, ok := aliasType.Underlying.(*scanner.Basic)
 	s.True(ok, "Aliased type is basic")
