@@ -312,7 +312,7 @@ func (g *Generator) buildFile(ctx *context, decls []ast.Decl) *ast.File {
 		Name: ast.NewIdent(ctx.pkg.Name()),
 	}
 
-	var specs = []ast.Spec{newImport("context")}
+	var specs = []ast.Spec{newImport("golang.org/x/net/context")}
 	for _, i := range ctx.imports {
 		specs = append(specs, newImport(i))
 	}

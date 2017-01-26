@@ -1,7 +1,7 @@
 package example
 
 import (
-	"context"
+	"golang.org/x/net/context"
 )
 
 type exampleServiceServer struct {

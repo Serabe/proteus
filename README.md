@@ -275,7 +275,15 @@ In the future, this will be extensible via plugins.
 
 ### Examples
 
-You can find an example of a *real* use case on the [example](https://github.com/src-d/proteus/tree/master/example) folder along with the generated `.proto` file so you can see what a generated protobuffer file looks like.
+You can find an example of a *real* use case on the [example](xample) folder.
+For checking how the server and client works, see
+[server.go](example/server/server.go) and
+[client.go](example/client/client.go). For running the example:
+
+- In the example folder, do a `make regenerate`.
+- `go run server/server.go &`
+- `go run client/client.go`
+- Kill your server.
 
 ### Features to come
 
