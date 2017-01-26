@@ -262,7 +262,7 @@ func (s *RPCSuite) TestDeclMethod() {
 const expectedGeneratedFile = `package subpkg
 
 import (
-	"context"
+	"golang.org/x/net/context"
 )
 
 type subpkgServiceServer struct {
